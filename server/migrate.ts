@@ -24,6 +24,16 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS projects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (char_length(name) BETWEEN 1 AND 60),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id,name)
+);
+INSERT INTO projects(user_id,name)
+SELECT DISTINCT user_id,label FROM tasks WHERE btrim(label)<>''
+ON CONFLICT(user_id,name) DO NOTHING;
 CREATE INDEX IF NOT EXISTS tasks_user_id_idx ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS tasks_user_status_idx ON tasks(user_id,status);
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_time TIME;
